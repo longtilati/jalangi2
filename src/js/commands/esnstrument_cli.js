@@ -28,9 +28,15 @@ if (typeof J$ === 'undefined') {
 (function (sandbox) {
     acorn = require("acorn");
     esotope = require("esotope");
-    require('../headers').headerSources.forEach(function (header) {
-        require("./../../../" + header);
-    });
+    // require('../headers').headerSources.forEach(function (header) {
+    //     require("./../../../" + header);
+    // });
+    require('../../../src/js/Config.js');
+    require('../../../src/js/Constants.js');
+    require("../../../src/js/instrument/astUtil.js");
+    require("../../../src/js/instrument/esnstrument.js");
+    require("../../../src/js/runtime/iidToLocation.js");
+    require("../../../src/js/runtime/analysis.js");
 
     var proxy = require("rewriting-proxy");
     var instUtil = require("../instrument/instUtil");
@@ -255,9 +261,9 @@ if (typeof J$ === 'undefined') {
     }
 
 
-    if (typeof window === 'undefined' && (typeof require !== "undefined") && require.main === module) {
+    // if (typeof window === 'undefined' && (typeof require !== "undefined") && require.main === module) {
         instrumentFile();
-    }
+    // }
 }(J$));
 
 
