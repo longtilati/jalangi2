@@ -40,16 +40,16 @@ if (typeof J$ === 'undefined') {
     // return true in a function, if you want the ast node (passed as the second argument) to be instrumented
     // ast node gets instrumented if you do not define the corresponding function
     Config.ENABLE_SAMPLING = false;
-//    Config.INSTR_INIT = function(name, ast) { return false; };
-//    Config.INSTR_READ = function(name, ast) { return false; };
-//    Config.INSTR_WRITE = function(name, ast) { return true; };
-//    Config.INSTR_GETFIELD = function(offset, ast) { return true; }; // offset is null if the property is computed
-//    Config.INSTR_PUTFIELD = function(offset, ast) { return true; }; // offset is null if the property is computed
-//    Config.INSTR_BINARY = function(operator, ast) { return true; };
-//    Config.INSTR_PROPERTY_BINARY_ASSIGNMENT = function(operator, offset, ast) { return true; }; // a.x += e or a[e1] += e2
-//    Config.INSTR_UNARY = function(operator, ast) { return true; };
-//    Config.INSTR_LITERAL = function(literal, ast) { return true;}; // literal gets some dummy value if the type is object, function, or array
-//    Config.INSTR_CONDITIONAL = function(type, ast) { return true; }; // type could be "&&", "||", "switch", "other"
-//    Config.INSTR_TRY_CATCH_ARGUMENTS = function(ast) {return false; }; // wrap function and script bodies with try catch block and use arguments in J$.Fe.  DO NOT USE THIS.
-//    Config.INSTR_END_EXPRESSION = function(ast) {return true; }; // top-level expression marker
+    Config.INSTR_INIT = function(name, ast) { return false; };
+    Config.INSTR_READ = function(name, ast) { return false; };
+    Config.INSTR_WRITE = function(name, ast) { return false; };
+    Config.INSTR_GETFIELD = function(offset, ast) { return false; }; // offset is null if the property is computed
+    Config.INSTR_PUTFIELD = function(offset, ast) { return false; }; // offset is null if the property is computed
+    Config.INSTR_BINARY = function(operator, ast) { return false; };
+    Config.INSTR_PROPERTY_BINARY_ASSIGNMENT = function(operator, offset, ast) { return false; }; // a.x += e or a[e1] += e2
+    Config.INSTR_UNARY = function(operator, ast) { return false; };
+    Config.INSTR_LITERAL = function(literal, ast) { return false; }; // literal gets some dummy value if the type is object, function, or array
+    Config.INSTR_CONDITIONAL = function(type, ast) { return false; }; // type could be "&&", "||", "switch", "other"
+    Config.INSTR_TRY_CATCH_ARGUMENTS = function(ast) { return false; }; // wrap function and script bodies with try catch block and use arguments in J$.Fe.  DO NOT USE THIS.
+    Config.INSTR_END_EXPRESSION = function(ast) { return false; }; // top-level expression marker
 }(J$));

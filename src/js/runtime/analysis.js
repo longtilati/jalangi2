@@ -121,10 +121,12 @@ if (typeof J$ === 'undefined') {
     function callAsNativeConstructorWithEval(Constructor, args) {
         var a = [];
         for (var i = 0; i < args.length; i++)
-            a[i] = 'args[' + i + ']';
+            // a[i] = 'args[' + i + ']';
+            a[i] = args[i];
         // var eval = EVAL_ORG;
         // return eval('new Constructor(' + a.join() + ')');
-        return EVAL_ORG('new Constructor(' + a.join() + ')');
+        // return EVAL_ORG('new Constructor(' + a.join() + ')');
+        return EVAL_ORG('new ' + Constructor.name + '(' + a.join() + ')');
     }
 
     function callAsNativeConstructor(Constructor, args) {

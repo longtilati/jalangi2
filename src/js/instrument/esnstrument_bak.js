@@ -576,21 +576,21 @@ if (typeof J$ === 'undefined') {
 
     function getFnIdFromAst(ast) {
         var entryExpr = ast.body.body[0];
-        if (entryExpr.type !== 'ExpressionStatement') {
+        if (entryExpr.type != 'ExpressionStatement') {
             console.log(JSON.stringify(entryExpr));
             throw new Error("IllegalStateException");
         }
         entryExpr = entryExpr.expression;
-        if (entryExpr.type !== 'CallExpression') {
+        if (entryExpr.type != 'CallExpression') {
             throw new Error("IllegalStateException");
         }
-        if (entryExpr.callee.type !== 'MemberExpression') {
+        if (entryExpr.callee.type != 'MemberExpression') {
             throw new Error("IllegalStateException");
         }
-        if (entryExpr.callee.object.name !== JALANGI_VAR) {
+        if (entryExpr.callee.object.name != JALANGI_VAR) {
             throw new Error("IllegalStateException");
         }
-        if (entryExpr.callee.property.name !== 'Fe') {
+        if (entryExpr.callee.property.name != 'Fe') {
             throw new Error("IllegalStateException");
         }
         return entryExpr['arguments'][0].value;
@@ -602,12 +602,12 @@ if (typeof J$ === 'undefined') {
             var hasGetterSetter = ifObjectExpressionHasGetterSetter(node);
 
             var ret;
-            if (funId === N_LOG_FUNCTION_LIT) {
+            if (funId == N_LOG_FUNCTION_LIT) {
                 var internalFunId = null;
-                if (node.type === 'FunctionExpression') {
+                if (node.type == 'FunctionExpression') {
                     internalFunId = getFnIdFromAst(node);
                 } else {
-                    if (node.type !== 'Identifier') {
+                    if (node.type != 'Identifier') {
                         throw new Error("IllegalStateException");
                     }
                     internalFunId = getFnIdFromAst(scope.funNodes[node.name]);
@@ -1067,12 +1067,12 @@ if (typeof J$ === 'undefined') {
 
 
     function instrumentFunctionEntryExit(node, ast) {
-        var body = createCallAsFunEnterStatement(node);
-        // if (!Config.INSTR_TRY_CATCH_ARGUMENTS || Config.INSTR_TRY_CATCH_ARGUMENTS(node)) {
-        //     body = createCallAsFunEnterStatement(node);
-        // } else {
-        //     body = [];
-        // }
+        var body;
+        if (!Config.INSTR_TRY_CATCH_ARGUMENTS || Config.INSTR_TRY_CATCH_ARGUMENTS(node)) {
+            body = createCallAsFunEnterStatement(node);
+        } else {
+            body = [];
+        }
         body = body.concat(syncDefuns(node, scope, false)).concat(ast);
         return body;
     }
@@ -1087,12 +1087,12 @@ if (typeof J$ === 'undefined') {
      *
      */
     function instrumentScriptEntryExit(node, body0) {
-        var body = createCallAsScriptEnterStatement(node);
-        // if (!Config.INSTR_TRY_CATCH_ARGUMENTS || Config.INSTR_TRY_CATCH_ARGUMENTS(node)) {
-        //     body = createCallAsScriptEnterStatement(node)
-        // } else {
-        //     body = [];
-        // }
+        var body;
+        if (!Config.INSTR_TRY_CATCH_ARGUMENTS || Config.INSTR_TRY_CATCH_ARGUMENTS(node)) {
+            body = createCallAsScriptEnterStatement(node)
+        } else {
+            body = [];
+        }
         body = body.concat(syncDefuns(node, scope, true)).
             concat(body0);
         return body;
@@ -1900,7 +1900,7 @@ if (typeof J$ === 'undefined') {
     }
 
     function removeShebang(code) {
-        if (code.indexOf("#!") === 0) {
+        if (code.indexOf("#!") == 0) {
             return code.substring(code.indexOf("\n") + 1);
         }
         return code;
@@ -1953,36 +1953,28 @@ if (typeof J$ === 'undefined') {
             }
         }
 
-        // var tmp = {};
+        var tmp = {};
 
-        // tmp.nBranches = iidSourceInfo.nBranches = (condIid / IID_INC_STEP - 1) * 2;
-        // tmp.originalCodeFileName = iidSourceInfo.originalCodeFileName = origCodeFileName;
-        // tmp.instrumentedCodeFileName = iidSourceInfo.instrumentedCodeFileName = instCodeFileName;
-        iidSourceInfo.nBranches = (condIid / IID_INC_STEP - 1) * 2;
-        iidSourceInfo.originalCodeFileName = origCodeFileName;
-        iidSourceInfo.instrumentedCodeFileName = instCodeFileName;
+        tmp.nBranches = iidSourceInfo.nBranches = (condIid / IID_INC_STEP - 1) * 2;
+        tmp.originalCodeFileName = iidSourceInfo.originalCodeFileName = origCodeFileName;
+        tmp.instrumentedCodeFileName = iidSourceInfo.instrumentedCodeFileName = instCodeFileName;
         if (url) {
-            // tmp.url = iidSourceInfo.url = url;
-            iidSourceInfo.url = url;
+            tmp.url = iidSourceInfo.url = url;
         }
         if (isEval) {
-            // tmp.evalSid = iidSourceInfo.evalSid = sandbox.sid;
-            // tmp.evalIid = iidSourceInfo.evalIid = thisIid;
-            iidSourceInfo.evalSid = sandbox.sid;
-            iidSourceInfo.evalIid = thisIid;
+            tmp.evalSid = iidSourceInfo.evalSid = sandbox.sid;
+            tmp.evalIid = iidSourceInfo.evalIid = thisIid;
         }
-        iidSourceInfo.code = options.code;
-        // if (inlineSource) {
-            // tmp.code = iidSourceInfo.code = options.code;
-        // }
+        if (inlineSource) {
+            tmp.code = iidSourceInfo.code = options.code;
+        }
 
         var prepend = JSON.stringify(iidSourceInfo);
         var instCode;
         if (options.inlineSourceMap) {
             instCode = JALANGI_VAR + ".iids = " + prepend + ";\n" + code;
         } else {
-            // instCode = JALANGI_VAR + ".iids = " + JSON.stringify(tmp) + ";\n" + code;
-            instCode = code;
+            instCode = JALANGI_VAR + ".iids = " + JSON.stringify(tmp) + ";\n" + code;
         }
 
         if (isEval && sandbox.analysis && sandbox.analysis.instrumentCode) {
