@@ -440,35 +440,15 @@ if (typeof J$ === 'undefined') {
         }
     }
 
-//    function wrapReadWithUndefinedCheck(node, name) {
-//        var ret = replaceInExpr(
-//            "("+logIFunName+"(typeof ("+name+") === 'undefined'? "+RP+"2 : "+RP+"3))",
-//            createIdentifierAst(name),
-//            wrapRead(node, createLiteralAst(name),createIdentifierAst("undefined")),
-//            wrapRead(node, createLiteralAst(name),createIdentifierAst(name), true)
-//        );
-//        transferLoc(ret, node);
-//        return ret;
-//    }
-
     function wrapReadWithUndefinedCheck(node, name) {
         var ret;
 
-        //if (name !== 'location') {
-        //    ret = replaceInExpr(
-        //        "(" + logIFunName + "(typeof (" + name + ") === 'undefined'? (" + name + "=" + RP + "2) : (" + name + "=" + RP + "3)))",
-        //        createIdentifierAst(name),
-        //        wrapRead(node, createLiteralAst(name), createIdentifierAst("undefined"), false, true, true),
-        //        wrapRead(node, createLiteralAst(name), createIdentifierAst(name), true, true, true)
-        //    );
-        //} else {
-            ret = replaceInExpr(
-                "(" + logIFunName + "(typeof (" + name + ") === 'undefined'? (" + RP + "2) : (" + RP + "3)))",
-                createIdentifierAst(name),
-                wrapRead(node, createLiteralAst(name), createIdentifierAst("undefined"), false, true, false),
-                wrapRead(node, createLiteralAst(name), createIdentifierAst(name), true, true, false)
-            );
-//        }
+        ret = replaceInExpr(
+            "(" + logIFunName + "(typeof (" + name + ") === 'undefined'? (" + RP + "2) : (" + RP + "3)))",
+            createIdentifierAst(name),
+            wrapRead(node, createLiteralAst(name), createIdentifierAst("undefined"), false, true, false),
+            wrapRead(node, createLiteralAst(name), createIdentifierAst(name), true, true, false)
+        );
         transferLoc(ret, node);
         return ret;
     }
@@ -493,12 +473,7 @@ if (typeof J$ === 'undefined') {
     function wrapWriteWithUndefinedCheck(node, name, val, lhs) {
         if (!Config.INSTR_WRITE || Config.INSTR_WRITE(name, node)) {
             printIidToLoc(node);
-//        var ret2 = replaceInExpr(
-//            "("+logIFunName+"(typeof ("+name+") === 'undefined'? "+RP+"2 : "+RP+"3))",
-//            createIdentifierAst(name),
-//            wrapRead(node, createLiteralAst(name),createIdentifierAst("undefined")),
-//            wrapRead(node, createLiteralAst(name),createIdentifierAst(name), true)
-//        );
+
             var ret = replaceInExpr(
                 logWriteFunName + "(" + RP + "1, " + RP + "2, " + RP + "3, " + logIFunName + "(typeof(" + lhs.name + ")==='undefined'?undefined:" + lhs.name + ")," + createBitPattern(true, false, false) +")",
                 getIid(),
@@ -826,18 +801,6 @@ if (typeof J$ === 'undefined') {
 
     }
 
-//    function createCallWriteAsStatement(node, name, val) {
-//        printIidToLoc(node);
-//        var ret = replaceInStatement(
-//            logWriteFunName + "(" + RP + "1, " + RP + "2, " + RP + "3)",
-//            getIid(),
-//            name,
-//            val
-//        );
-//        transferLoc(ret[0].expression, node);
-//        return ret;
-//    }
-
     function createExpressionStatement(lhs, node) {
         var ret;
         ret = replaceInStatement(
@@ -970,28 +933,22 @@ if (typeof J$ === 'undefined') {
     }
 
     function wrapFunBodyWithTryCatch(node, body) {
-        if (!Config.INSTR_TRY_CATCH_ARGUMENTS || Config.INSTR_TRY_CATCH_ARGUMENTS(node)) {
-            printIidToLoc(node);
-            var iid1 = getIid();
-            printIidToLoc(node);
-            var l = labelCounter++;
-            var ret = replaceInStatement(
-                "function n() { jalangiLabel" + l + ": while(true) { try {" + RP + "1} catch(" + JALANGI_VAR +
-                "e) { //console.log(" + JALANGI_VAR + "e); console.log(" +
-                JALANGI_VAR + "e.stack);\n " + logUncaughtExceptionFunName + "(" + RP + "2," + JALANGI_VAR +
-                "e); } finally { if (" + logFunctionReturnFunName + "(" +
-                RP + "3)) continue jalangiLabel" + l + ";\n else \n  return " + logReturnAggrFunName + "();\n }\n }}", body,
-                iid1,
-                getIid()
-            );
-            //console.log(JSON.stringify(ret));
+        printIidToLoc(node);
+        var iid1 = getIid();
+        printIidToLoc(node);
+        var l = labelCounter++;
+        var ret = replaceInStatement(
+            "function n() { try {" + RP + "1} catch(" + JALANGI_VAR +
+            "e) { " + logUncaughtExceptionFunName + "(" + RP + "2," + JALANGI_VAR +
+            "e); } finally { " + logFunctionReturnFunName + "(" +
+            RP + "3)\n }}", body,
+            iid1,
+            getIid()
+        );
 
-            ret = ret[0].body.body;
-            transferLoc(ret[0], node);
-            return ret;
-        } else {
-            return body;
-        }
+        ret = ret[0].body.body;
+        transferLoc(ret[0], node);
+        return ret;
     }
 
     function syncDefuns(node, scope, isScript) {
@@ -1009,77 +966,66 @@ if (typeof J$ === 'undefined') {
             }
         }
         if (scope) {
-                for (var name in scope.vars) {
-                    if (HOP(scope.vars, name)) {
-                        if (scope.vars[name] === "defun") {
-                            if (!Config.INSTR_INIT || Config.INSTR_INIT(node)) {
-                                ident = createIdentifierAst(name);
-                                ident.loc = scope.funLocs[name];
-                                ret = ret.concat(createCallInitAsStatement(node,
-                                    createLiteralAst(name),
-                                    wrapLiteral(ident, ident, N_LOG_FUNCTION_LIT),
-                                    false,
-                                    ident, false, true));
-                            } else {
-                                ident = createIdentifierAst(name);
-                                ident.loc = scope.funLocs[name];
-                                ret = ret.concat(
-                                    createExpressionStatement(ident,
-                                        wrapLiteral(ident, ident, N_LOG_FUNCTION_LIT)));
-                            }
+            for (var name in scope.vars) {
+                if (HOP(scope.vars, name)) {
+                    if (scope.vars[name] === "defun") {
+                        if (!Config.INSTR_INIT || Config.INSTR_INIT(node)) {
+                            ident = createIdentifierAst(name);
+                            ident.loc = scope.funLocs[name];
+                            ret = ret.concat(createCallInitAsStatement(node,
+                                createLiteralAst(name),
+                                wrapLiteral(ident, ident, N_LOG_FUNCTION_LIT),
+                                false,
+                                ident, false, true));
+                        } else {
+                            ident = createIdentifierAst(name);
+                            ident.loc = scope.funLocs[name];
+                            ret = ret.concat(
+                                createExpressionStatement(ident,
+                                    wrapLiteral(ident, ident, N_LOG_FUNCTION_LIT)));
                         }
-                        if (scope.vars[name] === "lambda") {
-                            if (!Config.INSTR_INIT || Config.INSTR_INIT(node)) {
-                                ident = createIdentifierAst(name);
-                                ident.loc = scope.funLocs[name];
-                                ret = ret.concat(createCallInitAsStatement(node,
-                                    createLiteralAst(name), ident,
-                                    false,
-                                    ident, false, true));
-                            }
+                    }
+                    if (scope.vars[name] === "lambda") {
+                        if (!Config.INSTR_INIT || Config.INSTR_INIT(node)) {
+                            ident = createIdentifierAst(name);
+                            ident.loc = scope.funLocs[name];
+                            ret = ret.concat(createCallInitAsStatement(node,
+                                createLiteralAst(name), ident,
+                                false,
+                                ident, false, true));
                         }
-                        if (scope.vars[name] === "arg") {
-                            if (!Config.INSTR_INIT || Config.INSTR_INIT(node)) {
-                                ident = createIdentifierAst(name);
-                                ret = ret.concat(createCallInitAsStatement(node,
-                                    createLiteralAst(name),
-                                    ident,
-                                    true,
-                                    ident, false, true));
-                            }
+                    }
+                    if (scope.vars[name] === "arg") {
+                        if (!Config.INSTR_INIT || Config.INSTR_INIT(node)) {
+                            ident = createIdentifierAst(name);
+                            ret = ret.concat(createCallInitAsStatement(node,
+                                createLiteralAst(name),
+                                ident,
+                                true,
+                                ident, false, true));
                         }
-                        if (scope.vars[name] === "var") {
-                            if (!Config.INSTR_INIT || Config.INSTR_INIT(node)) {
-                                ret = ret.concat(createCallInitAsStatement(node,
-                                    createLiteralAst(name),
-                                    createIdentifierAst(name),
-                                    false, undefined, false, false));
-                            }
+                    }
+                    if (scope.vars[name] === "var") {
+                        if (!Config.INSTR_INIT || Config.INSTR_INIT(node)) {
+                            ret = ret.concat(createCallInitAsStatement(node,
+                                createLiteralAst(name),
+                                createIdentifierAst(name),
+                                false, undefined, false, false));
                         }
                     }
                 }
+            }
         }
         return ret;
     }
 
-
     var scope;
-
 
     function instrumentFunctionEntryExit(node, ast) {
         var body = createCallAsFunEnterStatement(node);
-        // if (!Config.INSTR_TRY_CATCH_ARGUMENTS || Config.INSTR_TRY_CATCH_ARGUMENTS(node)) {
-        //     body = createCallAsFunEnterStatement(node);
-        // } else {
-        //     body = [];
-        // }
         body = body.concat(syncDefuns(node, scope, false)).concat(ast);
         return body;
     }
-
-//    function instrumentFunctionEntryExit(node, ast) {
-//        return wrapFunBodyWithTryCatch(node, ast);
-//    }
 
     /**
      * instruments entry of a script.  Adds the script entry (J$.Se) callback,
@@ -1088,11 +1034,6 @@ if (typeof J$ === 'undefined') {
      */
     function instrumentScriptEntryExit(node, body0) {
         var body = createCallAsScriptEnterStatement(node);
-        // if (!Config.INSTR_TRY_CATCH_ARGUMENTS || Config.INSTR_TRY_CATCH_ARGUMENTS(node)) {
-        //     body = createCallAsScriptEnterStatement(node)
-        // } else {
-        //     body = [];
-        // }
         body = body.concat(syncDefuns(node, scope, true)).
             concat(body0);
         return body;
@@ -1287,71 +1228,6 @@ if (typeof J$ === 'undefined') {
         return ret;
     }
 
-    /*
-     function constructEmptyObject(o) {
-     function F() {}
-     F.prototype = o;
-     return new F();
-     }
-
-     function clone(src) { // from http://davidwalsh.name/javascript-clone
-     function mixin(dest, source, copyFunc) {
-     var name, s, i, empty = {};
-     for(name in source){
-     // the (!(name in empty) || empty[name] !== s) condition avoids copying properties in "source"
-     // inherited from Object.prototype.	 For example, if dest has a custom toString() method,
-     // don't overwrite it with the toString() method that source inherited from Object.prototype
-     s = source[name];
-     if(!(name in dest) || (dest[name] !== s && (!(name in empty) || empty[name] !== s))){
-     dest[name] = copyFunc ? copyFunc(s) : s;
-     }
-     }
-     return dest;
-     }
-
-     if(!src || typeof src != "object" || Object.prototype.toString.call(src) === "[object Function]"){
-     // null, undefined, any non-object, or function
-     return src;	// anything
-     }
-     if(src.nodeType && "cloneNode" in src){
-     // DOM Node
-     return src.cloneNode(true); // Node
-     }
-     if(src instanceof Date){
-     // Date
-     return new Date(src.getTime());	// Date
-     }
-     if(src instanceof RegExp){
-     // RegExp
-     return new RegExp(src);   // RegExp
-     }
-     var r, i, l;
-     if(src instanceof Array){
-     // array
-     r = [];
-     for(i = 0, l = src.length; i < l; ++i){
-     if(i in src){
-     r.push(clone(src[i]));
-     }
-     }
-     // we don't clone functions for performance reasons
-     //		}else if(d.isFunction(src)){
-     //			// function
-     //			r = function(){ return src.apply(this, arguments); };
-     }else{
-     // generic objects
-     try {
-     r = constructEmptyObject(src);
-     //                r = src.constructor ? new src.constructor() : {};
-     } catch (e) {
-     console.log(src);
-     throw e;
-     }
-     }
-     return mixin(r, src, clone);
-
-     }
-     */
     var visitorCloneBodyPre = {
         "FunctionExpression": function (node) {
             node.bodyOrig = clone(node.body);
@@ -1430,8 +1306,6 @@ if (typeof J$ === 'undefined') {
             };
             transferLoc(ret, node);
             return ret;
-//            var ret1 = wrapLiteral(node, ret, N_LOG_OBJECT_LIT);
-//            return ret1;
         },
         "CallExpression": function (node) {
             var isEval = node.callee.type === 'Identifier' && node.callee.name === "eval";
@@ -1471,7 +1345,6 @@ if (typeof J$ === 'undefined') {
             return ret1;
         },
         "FunctionDeclaration": function (node) {
-            //console.log(node.body.body);
             node.body.body = instrumentFunctionEntryExit(node, node.body.body);
             scope = scope.parent;
             return node;
@@ -1519,13 +1392,6 @@ if (typeof J$ === 'undefined') {
             node.right = ret;
 
             node = wrapForIn(node, node.left, node.right, node.body);
-            //var name;
-            //if (node.left.type === 'VariableDeclaration') {
-            //    name = node.left.declarations[0].id.name;
-            //} else {
-            //    name = node.left.name;
-            //}
-            //node.body = wrapForInBody(node, node.body, name);
             return node;
         },
         "CatchClause": function (node) {
@@ -1857,22 +1723,12 @@ if (typeof J$ === 'undefined') {
     // END of Liang Gong's AST post-processor
 
     function transformString(code, visitorsPost, visitorsPre) {
-//         StatCollector.resumeTimer("parse");
-//        console.time("parse")
-//        var newAst = esprima.parse(code, {loc:true, range:true});
         var newAst = acorn.parse(code, { locations: true, ecmaVersion: 6, allowReturnOutsideFunction: true });
-//        console.timeEnd("parse")
-//        StatCollector.suspendTimer("parse");
-//        StatCollector.resumeTimer("transform");
-//        console.time("transform")
         addScopes(newAst);
         var len = visitorsPost.length;
         for (var i = 0; i < len; i++) {
             newAst = astUtil.transformAst(newAst, visitorsPost[i], visitorsPre[i], astUtil.CONTEXT.RHS);
         }
-//        console.timeEnd("transform")
-//        StatCollector.suspendTimer("transform");
-//        console.log(JSON.stringify(newAst,null,"  "));
         return newAst;
     }
 
@@ -1953,35 +1809,23 @@ if (typeof J$ === 'undefined') {
             }
         }
 
-        // var tmp = {};
-
-        // tmp.nBranches = iidSourceInfo.nBranches = (condIid / IID_INC_STEP - 1) * 2;
-        // tmp.originalCodeFileName = iidSourceInfo.originalCodeFileName = origCodeFileName;
-        // tmp.instrumentedCodeFileName = iidSourceInfo.instrumentedCodeFileName = instCodeFileName;
         iidSourceInfo.nBranches = (condIid / IID_INC_STEP - 1) * 2;
         iidSourceInfo.originalCodeFileName = origCodeFileName;
         iidSourceInfo.instrumentedCodeFileName = instCodeFileName;
         if (url) {
-            // tmp.url = iidSourceInfo.url = url;
             iidSourceInfo.url = url;
         }
         if (isEval) {
-            // tmp.evalSid = iidSourceInfo.evalSid = sandbox.sid;
-            // tmp.evalIid = iidSourceInfo.evalIid = thisIid;
             iidSourceInfo.evalSid = sandbox.sid;
             iidSourceInfo.evalIid = thisIid;
         }
         iidSourceInfo.code = options.code;
-        // if (inlineSource) {
-            // tmp.code = iidSourceInfo.code = options.code;
-        // }
 
         var prepend = JSON.stringify(iidSourceInfo);
         var instCode;
         if (options.inlineSourceMap) {
             instCode = JALANGI_VAR + ".iids = " + prepend + ";\n" + code;
         } else {
-            // instCode = JALANGI_VAR + ".iids = " + JSON.stringify(tmp) + ";\n" + code;
             instCode = code;
         }
 
